@@ -12,8 +12,7 @@ blueprint:
       name: Сервис уведомлений
       description: Выберите сервис уведомлений вашего мобильного устройства (например, notify.mobile_app_sm_a546e)
       selector:
-        service:
-          domain: notify
+        action:
     input_boolean:
       name: Выделенный input_boolean
       description: Создайте и укажите здесь input_boolean для ведения истории и состояния автоматизации
@@ -24,23 +23,23 @@ blueprint:
           multiple: false
     notification_title:
       name: Заголовок уведомления (необязательно)
-      description: 'По умолчанию: Medication reminder!'
+      description: 'По умолчанию: Напоминание о лекарстве!'
       default: Напоминание о лекарстве!
     notification_message:
       name: Текст уведомления (необязательно)
-      description: 'По умолчанию: It''s time to take your medication'
+      description: 'По умолчанию: Пора принять лекарство'
       default: Пора принять лекарство
     notification_action_taken:
       name: 'Кнопка уведомления: Принято (необязательно)'
-      description: 'По умолчанию: Taken'
+      description: 'По умолчанию: Принято'
       default: Принято
     notification_action_later:
       name: 'Кнопка уведомления: Напомнить позже (необязательно)'
-      description: 'По умолчанию: Ask later'
+      description: 'По умолчанию: Напомнить позже'
       default: Напомнить позже
     notification_action_skip:
       name: 'Кнопка уведомления: Пропустить (необязательно)'
-      description: 'По умолчанию: Skip'
+      description: 'По умолчанию: Пропустить'
       default: Пропустить
     ask_later_wait_time:
       name: Время ожидания до следующего напоминания
@@ -55,23 +54,23 @@ blueprint:
           mode: slider
     logbook_message_remind:
       name: Сообщение в журнале при напоминании (необязательно)
-      description: 'По умолчанию: Reminder sent'
+      description: 'По умолчанию: Напоминание отправлено'
       default: Напоминание отправлено
     logbook_message_taken:
       name: Сообщение в журнале при действии «Принято» (необязательно)
-      description: 'По умолчанию: Medication taken'
+      description: 'По умолчанию: Лекарство принято'
       default: Лекарство принято
     logbook_message_later:
       name: Сообщение в журнале при действии «Напомнить позже» (необязательно)
-      description: 'По умолчанию: Postpone reminder'
+      description: 'По умолчанию: Напоминание отложено'
       default: Напоминание отложено
     logbook_message_skip:
       name: Сообщение в журнале при действии «Пропустить» (необязательно)
-      description: 'По умолчанию: Reminder skipped'
+      description: 'По умолчанию: Напоминание пропущено'
       default: Напоминание пропущено
     logbook_message_no_answer:
       name: Сообщение в журнале при отсутствии ответа после тайм-аута (необязательно)
-      description: 'По умолчанию: No answer time out'
+      description: 'По умолчанию: Нет ответа, тайм-аут'
       default: Нет ответа, тайм-аут
     optional_action:
       name: Дополнительное действие
@@ -79,7 +78,7 @@ blueprint:
       selector:
         action: {}
       default: []
-  source_url: https://github.com/stuffmsksu/med-notify/blob/main/med-notify.yaml
+  source_url: https://raw.githubusercontent.com/Aohzan/hass-blueprints/main/blueprints/medication_reminder_android.yaml
 trigger:
 - platform: time
   at: !input reminder_time
