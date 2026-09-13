@@ -1,0 +1,171 @@
+blueprint:
+  name: Продвинутое напоминание о лекарствах (Android)
+  description: Продвинутые уведомления и история для напоминания о приёме лекарств
+  domain: automation
+  input:
+    reminder_time:
+      name: Время напоминания
+      description: В какое время вы хотите получить напоминание
+      selector:
+        time: {}
+    notify_service:
+      name: Сервис уведомлений
+      description: Выберите сервис уведомлений вашего мобильного устройства (например, notify.mobile_app_sm_a546e)
+      selector:
+        service:
+          domain: notify
+    input_boolean:
+      name: Выделенный input_boolean
+      description: Создайте и укажите здесь input_boolean для ведения истории и состояния автоматизации
+      selector:
+        entity:
+          domain:
+          - input_boolean
+          multiple: false
+    notification_title:
+      name: Заголовок уведомления (необязательно)
+      description: 'По умолчанию: Medication reminder!'
+      default: Напоминание о лекарстве!
+    notification_message:
+      name: Текст уведомления (необязательно)
+      description: 'По умолчанию: It''s time to take your medication'
+      default: Пора принять лекарство
+    notification_action_taken:
+      name: 'Кнопка уведомления: Принято (необязательно)'
+      description: 'По умолчанию: Taken'
+      default: Принято
+    notification_action_later:
+      name: 'Кнопка уведомления: Напомнить позже (необязательно)'
+      description: 'По умолчанию: Ask later'
+      default: Напомнить позже
+    notification_action_skip:
+      name: 'Кнопка уведомления: Пропустить (необязательно)'
+      description: 'По умолчанию: Skip'
+      default: Пропустить
+    ask_later_wait_time:
+      name: Время ожидания до следующего напоминания
+      description: Через сколько минут повторить уведомление после нажатия «Напомнить позже».
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 1440
+          unit_of_measurement: минут
+          step: 1
+          mode: slider
+    logbook_message_remind:
+      name: Сообщение в журнале при напоминании (необязательно)
+      description: 'По умолчанию: Reminder sent'
+      default: Напоминание отправлено
+    logbook_message_taken:
+      name: Сообщение в журнале при действии «Принято» (необязательно)
+      description: 'По умолчанию: Medication taken'
+      default: Лекарство принято
+    logbook_message_later:
+      name: Сообщение в журнале при действии «Напомнить позже» (необязательно)
+      description: 'По умолчанию: Postpone reminder'
+      default: Напоминание отложено
+    logbook_message_skip:
+      name: Сообщение в журнале при действии «Пропустить» (необязательно)
+      description: 'По умолчанию: Reminder skipped'
+      default: Напоминание пропущено
+    logbook_message_no_answer:
+      name: Сообщение в журнале при отсутствии ответа после тайм-аута (необязательно)
+      description: 'По умолчанию: No answer time out'
+      default: Нет ответа, тайм-аут
+    optional_action:
+      name: Дополнительное действие
+      description: Выполнить действие, например уведомление через динамик, одновременно с мобильным уведомлением
+      selector:
+        action: {}
+      default: []
+  source_url: https://raw.githubusercontent.com/Aohzan/hass-blueprints/main/blueprints/medication_reminder_android.yaml
+trigger:
+- platform: time
+  at: !input reminder_time
+mode: restart
+action:
+- service: input_boolean.turn_off
+  target:
+    entity_id: !input input_boolean
+- alias: Уведомлять, пока лекарство не принято
+  repeat:
+    while:
+    - condition: state
+      entity_id: !input input_boolean
+      state: 'off'
+    sequence:
+    - service: logbook.log
+      data:
+        name: !input notification_title
+        message: !input logbook_message_remind
+        entity_id: !input input_boolean
+    - choose:
+      - conditions: '{{ true }}'
+        sequence: !input optional_action
+    - service: !input notify_service
+      data:
+        title: !input notification_title
+        message: !input notification_message
+        data:
+          ttl: 0
+          priority: "high"
+          actions:
+          - title: !input notification_action_taken
+            action: taken
+          - title: !input notification_action_later
+            action: later
+          - title: !input notification_action_skip
+            action: skip
+          tag: !input input_boolean
+    - wait_for_trigger:
+        platform: event
+        event_type: mobile_app_notification_action
+        event_data:
+          tag: !input input_boolean
+      timeout:
+        minutes: !input ask_later_wait_time
+    - choose:
+      - conditions: '{{ wait.trigger and wait.trigger.event.data.action == ''taken''
+          }}'
+        sequence:
+        - service: input_boolean.turn_on
+          target:
+            entity_id: !input input_boolean
+        - service: logbook.log
+          data:
+            name: !input notification_title
+            message: !input logbook_message_taken
+            entity_id: !input input_boolean
+      - conditions: '{{ wait.trigger and wait.trigger.event.data.action == ''later''
+          }}'
+        sequence:
+        - service: logbook.log
+          data:
+            name: !input notification_title
+            message: !input logbook_message_later
+            entity_id: !input input_boolean
+        - delay:
+            minutes: !input ask_later_wait_time
+      - conditions: '{{ wait.trigger and wait.trigger.event.data.action == ''skip''
+          }}'
+        sequence:
+        - service: input_boolean.turn_on
+          target:
+            entity_id: !input input_boolean
+        - service: logbook.log
+          data:
+            name: !input notification_title
+            message: !input logbook_message_skip
+            entity_id: !input input_boolean
+      default:
+      - service: !input notify_service
+        data:
+          message: clear_notification
+          data:
+            tag: !input input_boolean
+      - service: logbook.log
+        data:
+          name: !input notification_title
+          message: !input logbook_message_no_answer
+          entity_id: !input input_boolean
