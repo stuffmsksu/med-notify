@@ -79,7 +79,7 @@ blueprint:
       selector:
         action: {}
       default: []
-  source_url: https://raw.githubusercontent.com/Aohzan/hass-blueprints/main/blueprints/medication_reminder_android.yaml
+  source_url: https://github.com/stuffmsksu/med-notify/blob/main/med-notify.yaml
 trigger:
 - platform: time
   at: !input reminder_time
